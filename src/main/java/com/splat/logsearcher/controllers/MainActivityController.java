@@ -1,6 +1,6 @@
 package com.splat.logsearcher.controllers;
 
-import com.sun.scenario.effect.impl.sw.sse.SSEBlend_SRC_OUTPeer;
+import com.splat.logsearcher.ResultOfSearching;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -11,7 +11,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import javafx.stage.StageStyle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,17 +22,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
-
 public class MainActivityController {
     private static final Logger log = LoggerFactory.getLogger(MainActivityController.class);
-    public static final Integer THREAD_NUMBER = Runtime.getRuntime().availableProcessors();
+    private static final Integer THREAD_NUMBER = Runtime.getRuntime().availableProcessors();
     @FXML
     public Button search_button;
 
@@ -50,48 +46,48 @@ public class MainActivityController {
     private String pathToDirectory;
     private String exchangeOfFile;
 
-    private static ConcurrentHashMap<String, String> searchResult;
+    //private static ConcurrentHashMap<String, String> searchResult;
+    private static List<ResultOfSearching> list;
     private static ExecutorService executorService;
-
     private int numberOfNewLineCharacter;
+
+    public MainActivityController() {
+        list = new CopyOnWriteArrayList<>();
+        executorService = Executors.newFixedThreadPool(THREAD_NUMBER);
+        String osName = System.getProperty("os.name");
+        if (osName.contains("Windows")) {
+            numberOfNewLineCharacter = 2;
+        } else {
+            numberOfNewLineCharacter = 1;
+        }
+    }
+
+    public void initialize() {
+        path.setText("E:\\testdir");
+        text.setText("lol");
+        exchange.setText("txt");
+    }
 
     public static ExecutorService getExecutorService() {
         return executorService;
     }
 
-    public static void setExecutorService(ExecutorService executorService) {
-        MainActivityController.executorService = executorService;
-    }
-
-    public void initialize() {
-        path.setText("E:\\testdir\\1");
-        text.setText("lol");
-        exchange.setText("log");
-        String osName = System.getProperty("os.name");
-        if(osName.contains("Windows")){
-            numberOfNewLineCharacter = 2;
-        } else {
-            numberOfNewLineCharacter = 1;
-        }
-        executorService = Executors.newFixedThreadPool(THREAD_NUMBER);
-    }
-
     private Callable<String> getThreadWorker(File file, long startByte, long endByte) {
         return () -> {
             log.info("Thread name: " + Thread.currentThread().getName() +
-                    " Reading " + file.getName() + "(" + startByte +", " + endByte + ")");
+                    " Reading " + file.getName() + "(" + startByte + ", " + endByte + ")");
             try {
                 RandomAccessFile raf = new RandomAccessFile(file, "r");
-                if(startByte == 0){
-                    raf.seek(startByte);
-                } else {
-                    raf.seek(startByte + raf.readLine().length());
+                raf.seek(startByte);
+                if(startByte != 0){
+                    raf.readLine();
                 }
-                String line = null;
-                while(raf.getFilePointer() <= endByte){
+                String line;
+                while (raf.getFilePointer() <= endByte) {
                     line = raf.readLine();
-                    if(line.contains(searchingString)){
-                        searchResult.put(file.getName() + "\t Byte number: " + (raf.getFilePointer() - (line.length() + numberOfNewLineCharacter)) , line);
+                    if (line.contains(searchingString)) {
+                        list.add(new ResultOfSearching(file.getPath(),
+                                (raf.getFilePointer() - (line.length() + numberOfNewLineCharacter)), line));
                     }
                 }
             } catch (FileNotFoundException e) {
@@ -107,7 +103,7 @@ public class MainActivityController {
 
     @FXML
     private void click(ActionEvent event) {
-        searchResult = new ConcurrentHashMap<>();
+        list.clear();
         pathToDirectory = path.getText();
         exchangeOfFile = exchange.getText();
         searchingString = text.getText();
@@ -132,32 +128,39 @@ public class MainActivityController {
                     try {
                         done.get();
                     } catch (InterruptedException | ExecutionException e) {
+                        log.error(e.getMessage());
                         e.printStackTrace();
                     }
                 }
-                viewResults();
+                if (list.size() > 0) {
+                    viewResults();
+                } else {
+                    showAlert("In directory: " + pathToDirectory + " the files in text: " + searchingString + "do not contain");
+                }
             } else {
                 log.info("Files with exchange ." + exchangeOfFile + " in directory: " + pathToDirectory + " don't exist!");
-                Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                alert.setTitle("Result of searching");
-                alert.setContentText("Files with exchange ." + exchangeOfFile + " in directory: " + pathToDirectory + " don't exist!");
-                alert.showAndWait();
+                showAlert("Files with exchange ." + exchangeOfFile + " in directory: " + pathToDirectory + " don't exist!");
             }
         } else {
             log.info("Incorrect parameters");
         }
     }
 
-    private void viewResults(){
-        searchResult.forEach(
-                (p, k)-> System.out.println(p + " " + k));
+    private void showAlert(String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("ResultOfSearching of searching");
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
 
+    private void viewResults() {
+        list.forEach(f -> log.info(f.toString()));
+        //Open new activity for view result
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/fxml/SearchingResultActivity.fxml"));
         try {
             Parent root1 = fxmlLoader.load();
             Stage stage = new Stage();
             stage.initModality(Modality.APPLICATION_MODAL);
-            //stage.initStyle(StageStyle.UNDECORATED);
             stage.setTitle("Results of searching");
             stage.setScene(new Scene(root1));
             stage.show();
