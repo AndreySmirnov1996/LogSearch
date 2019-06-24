@@ -9,8 +9,11 @@ import javafx.stage.Stage;
 
 public class Main extends Application {
 
+    public static Stage stage;
+
     @Override
     public void start(Stage stage) throws Exception {
+        Main.stage = stage;
         Parent root = FXMLLoader.load(getClass().getResource("/fxml/MainActivity.fxml"));
         stage.setTitle("LogSearcher");
         stage.setScene(new Scene(root));

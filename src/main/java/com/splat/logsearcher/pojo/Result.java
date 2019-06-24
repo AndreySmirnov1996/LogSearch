@@ -1,11 +1,11 @@
-package com.splat.logsearcher;
+package com.splat.logsearcher.pojo;
 
-public class ResultOfSearching {
+public class Result {
     private String path;
-    private long startByte;
+    private Long startByte;
     private String line;
 
-    public ResultOfSearching(String path, long startByte, String line) {
+    public Result(String path, Long startByte, String line) {
         this.path = path;
         this.startByte = startByte;
         this.line = line;
@@ -19,7 +19,7 @@ public class ResultOfSearching {
         this.path = path;
     }
 
-    public long getStartByte() {
+    public Long getStartByte() {
         return startByte;
     }
 
