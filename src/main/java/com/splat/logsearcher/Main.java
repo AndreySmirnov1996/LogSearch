@@ -1,6 +1,5 @@
 package com.splat.logsearcher;
 
-import com.splat.logsearcher.controllers.MainActivityController;
 import com.splat.logsearcher.services.SubStringSearcher;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -20,12 +19,15 @@ public class Main extends Application {
         stage.setScene(new Scene(root));
         stage.setOnCloseRequest(event -> {
             try {
-                SubStringSearcher.getExecutorService().shutdown();
+                if (SubStringSearcher.getExecutorService() != null) {
+                    SubStringSearcher.getExecutorService().shutdown();
+                }
                 stop();
             } catch (Exception e) {
                 e.printStackTrace();
             }
         });
+        stage.setResizable(false);
         stage.show();
     }
 

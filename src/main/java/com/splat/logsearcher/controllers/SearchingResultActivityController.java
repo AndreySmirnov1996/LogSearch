@@ -5,14 +5,12 @@ import com.splat.logsearcher.services.SubStringSearcher;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import javafx.util.Callback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,8 +21,7 @@ import java.io.RandomAccessFile;
 public class SearchingResultActivityController {
     private static final Logger log = LoggerFactory.getLogger(SearchingResultActivityController.class);
 
-    private static final int NUMBER_ON_PAGE_ON_TAB = 8;
-    private static final int  PAGE_SIZE = 4096;
+    private static final int PAGE_SIZE = 4096;
 
     @FXML
     private TableView<Result> tableResults;
@@ -67,24 +64,6 @@ public class SearchingResultActivityController {
     }
 
     private void viewLogs(Result result) throws IOException {
-//        try {
-//            Desktop.getDesktop().open(file);
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-
-//        VBox root = new VBox();
-//        Stage stage = new Stage();
-//        stage.initModality(Modality.APPLICATION_MODAL);
-//        root.setPadding(new Insets(10));
-//        root.setSpacing(5);
-//        root.getChildren().add(new Label("Enter message:"));
-//        TextArea textArea = new TextArea();
-//        root.getChildren().add(textArea);
-//        Scene scene = new Scene(root, 320, 150);
-//        stage.setTitle("JavaFX TextArea (o7planning.org)");
-//        stage.setScene(scene);
-//        stage.show();
         File file = new File(result.getPath());
         RandomAccessFile raf = new RandomAccessFile(file, "r");
         int pageOfFile = (int) file.length() / PAGE_SIZE + 1;
@@ -92,7 +71,6 @@ public class SearchingResultActivityController {
         Pagination pagination = new Pagination(pageOfFile, searchPage);
 
         final boolean[] firstTimePAgeView = {true};
-        pagination.setStyle("-fx-border-color:red;");
         pagination.setPageFactory(pageIndex -> {
             try {
                 long pos = pageIndex * PAGE_SIZE - PAGE_SIZE / 2;
@@ -105,7 +83,7 @@ public class SearchingResultActivityController {
                 raf.seek(pos);
                 raf.readLine(); // skip first line
                 VBox box = new VBox();
-                while(raf.getFilePointer() < pos + PAGE_SIZE / 2){
+                while (raf.getFilePointer() < pos + PAGE_SIZE / 2) {
                     String line = raf.readLine();
                     VBox element = new VBox();
                     element.getChildren().add(new Label(line));
@@ -118,13 +96,19 @@ public class SearchingResultActivityController {
             return null;
         });
 
+        ScrollPane scrollPane = new ScrollPane();
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scrollPane.setContent(pagination);
+
         AnchorPane anchor = new AnchorPane();
-        AnchorPane.setTopAnchor(pagination, 10.0);
-        AnchorPane.setRightAnchor(pagination, 10.0);
-        AnchorPane.setBottomAnchor(pagination, 10.0);
-        AnchorPane.setLeftAnchor(pagination, 10.0);
-        anchor.getChildren().addAll(pagination);
-        Scene scene = new Scene(anchor, 700, 500);
+        AnchorPane.setTopAnchor(scrollPane, 10.0);
+        AnchorPane.setRightAnchor(scrollPane, 10.0);
+        AnchorPane.setBottomAnchor(scrollPane, 10.0);
+        AnchorPane.setLeftAnchor(scrollPane, 10.0);
+        anchor.getChildren().add(scrollPane);
+
+        Scene scene = new Scene(anchor, 800, 560);
         Stage stage = new Stage();
         stage.setScene(scene);
         stage.setTitle("Log Viewer");

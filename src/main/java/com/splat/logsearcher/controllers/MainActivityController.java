@@ -89,8 +89,6 @@ public class MainActivityController {
                 }
             }
             log.info("Searching is done");
-
-
         } else {
             log.info("Incorrect parameters");
         }
@@ -102,7 +100,6 @@ public class MainActivityController {
         alert.setContentText(message);
         alert.showAndWait();
     }
-
 
     private boolean checkParameters() { //Check all input data
         boolean flagPath = false;
