@@ -41,12 +41,6 @@ public class MainActivityController {
     public MainActivityController() {
     }
 
-    public void initialize() {
-        path.setText("E:\\testdir\\3");
-        text.setText("lol");
-        exchange.setText("txt");
-    }
-
     @FXML
     private void clickPathButton(ActionEvent event) {
         path.clear();

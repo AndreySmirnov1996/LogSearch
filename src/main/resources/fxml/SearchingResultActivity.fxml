@@ -1,19 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.layout.*?>
-<GridPane alignment="CENTER" hgap="10.0" prefHeight="439.0" prefWidth="555.0" vgap="10.0"
+<?import javafx.scene.text.Text?>
+<GridPane alignment="CENTER" hgap="10.0" prefHeight="439.0" prefWidth="900" vgap="10.0"
           xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2"
           fx:controller="com.splat.logsearcher.controllers.SearchingResultActivityController">
     <children>
-        <TableView fx:id="tableResults" prefHeight="200.0" prefWidth="200.0" GridPane.columnIndex="0"
+        <Pane prefHeight="200.0" prefWidth="200.0" GridPane.columnIndex="0" GridPane.rowIndex="0">
+            <children>
+                <Text layoutX="106.0" layoutY="16.0" scaleX="2.458405539659311" scaleY="1.3759177679882526"
+                      strokeType="OUTSIDE" strokeWidth="0.0" text="Double click to select file"/>
+            </children>
+        </Pane>
+        <TableView fx:id="tableResults" prefHeight="-1.0" prefWidth="-1.0" GridPane.columnIndex="0"
                    GridPane.rowIndex="0">
             <columns>
-                <TableColumn fx:id="byteColumn" prefWidth="65.0" text="Byte"/>
-                <TableColumn fx:id="pathColumn" prefWidth="196.0" text="Path"/>
-                <TableColumn fx:id="lineColumn" prefWidth="292.0" text="Line"/>
+                <TableColumn prefWidth="250.0" text="Path" fx:id="pathColumn"/>
+                <TableColumn prefWidth="70.0" resizable="false" text="Byte" fx:id="byteColumn"/>
+                <TableColumn prefWidth="800.0" text="Line" fx:id="lineColumn"/>
             </columns>
+            <GridPane.margin>
+                <Insets top="20.0"/>
+            </GridPane.margin>
         </TableView>
     </children>
     <columnConstraints>
