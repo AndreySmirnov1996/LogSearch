@@ -1,33 +1,27 @@
 package com.splat.logsearcher.controllers;
 
 import com.splat.logsearcher.pojo.Result;
+import com.splat.logsearcher.services.SubStringSearcher;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextArea;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
-import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.awt.*;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.RandomAccessFile;
 
 public class SearchingResultActivityController {
     private static final Logger log = LoggerFactory.getLogger(SearchingResultActivityController.class);
-    private ObservableList<Result> resultsData = FXCollections.observableArrayList(MainActivityController.getList());
 
     private static final int NUMBER_ON_PAGE = 8;
 
@@ -52,28 +46,28 @@ public class SearchingResultActivityController {
         pathColumn.setCellValueFactory(new PropertyValueFactory<>("path"));
         byteColumn.setCellValueFactory(new PropertyValueFactory<>("startByte"));
         lineColumn.setCellValueFactory(new PropertyValueFactory<>("line"));
+        ObservableList<Result> resultsData =
+                FXCollections.observableArrayList(SubStringSearcher.getListOfResults());
         tableResults.setItems(resultsData);
-
-        tableResults.setRowFactory( tv -> {
+        tableResults.setRowFactory(tv -> {
             TableRow<Result> row = new TableRow<>();
             row.setOnMouseClicked(event -> {
-                if (event.getClickCount() == 2 && (! row.isEmpty()) ) {
+                if (event.getClickCount() == 2 && (!row.isEmpty())) {
                     Result rowData = row.getItem();
                     log.info("User chooses row: " + rowData);
                     try {
                         viewLogs(rowData);
                     } catch (FileNotFoundException e) {
+                        log.error(e.getMessage());
                         e.printStackTrace();
                     }
                 }
             });
-            return row ;
+            return row;
         });
     }
 
     private void viewLogs(Result result) throws FileNotFoundException {
-
-
 //        try {
 //            Desktop.getDesktop().open(file);
 //        } catch (IOException e) {
@@ -94,7 +88,7 @@ public class SearchingResultActivityController {
 //        stage.show();
         File file = new File(result.getPath());
         RandomAccessFile raf = new RandomAccessFile(file, "r");
-        int pageOfFile = (int)file.length() / 1500;
+        int pageOfFile = (int) file.length() / 1500;
 
         pagination = new Pagination(pageOfFile, NUMBER_ON_PAGE);
         pagination.setStyle("-fx-border-color:red;");
@@ -125,9 +119,9 @@ public class SearchingResultActivityController {
         int page = pageIndex * NUMBER_ON_PAGE;
         for (int i = page; i < page + NUMBER_ON_PAGE; i++) {
             VBox element = new VBox();
-            Hyperlink link = new Hyperlink("Item " + (i+1));
+            Hyperlink link = new Hyperlink("Item " + (i + 1));
             link.setVisited(true);
-            Label text = new Label("Search results\nfor "+ link.getText());
+            Label text = new Label("Search results\nfor " + link.getText());
             element.getChildren().addAll(link, text);
             box.getChildren().add(element);
         }
