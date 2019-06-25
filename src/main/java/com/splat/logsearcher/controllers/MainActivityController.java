@@ -41,6 +41,10 @@ public class MainActivityController {
     public MainActivityController() {
     }
 
+    public void initialize() {
+        exchange.setText("log");
+    }
+
     @FXML
     private void clickPathButton(ActionEvent event) {
         path.clear();
