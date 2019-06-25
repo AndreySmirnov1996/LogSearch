@@ -83,8 +83,6 @@ public class MainActivityController {
                     }
                 }
                 if (SubStringSearcher.getListOfResults().size() > 0) {
-                    //TODO
-                    //searcher.getLineFromFile();
                     searcher.viewResults();
                 } else {
                     showAlert("In directory: " + pathToDirectory + " the files in text: " + searchingString + "do not contain");

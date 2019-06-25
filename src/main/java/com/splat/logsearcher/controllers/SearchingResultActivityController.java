@@ -17,15 +17,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.RandomAccessFile;
 
 public class SearchingResultActivityController {
     private static final Logger log = LoggerFactory.getLogger(SearchingResultActivityController.class);
 
-    private static final int NUMBER_ON_PAGE = 8;
-
-    private Pagination pagination;
+    private static final int NUMBER_ON_PAGE_ON_TAB = 8;
+    private static final int  PAGE_SIZE = 4096;
 
     @FXML
     private TableView<Result> tableResults;
@@ -57,7 +56,7 @@ public class SearchingResultActivityController {
                     log.info("User chooses row: " + rowData);
                     try {
                         viewLogs(rowData);
-                    } catch (FileNotFoundException e) {
+                    } catch (IOException e) {
                         log.error(e.getMessage());
                         e.printStackTrace();
                     }
@@ -67,7 +66,7 @@ public class SearchingResultActivityController {
         });
     }
 
-    private void viewLogs(Result result) throws FileNotFoundException {
+    private void viewLogs(Result result) throws IOException {
 //        try {
 //            Desktop.getDesktop().open(file);
 //        } catch (IOException e) {
@@ -88,15 +87,35 @@ public class SearchingResultActivityController {
 //        stage.show();
         File file = new File(result.getPath());
         RandomAccessFile raf = new RandomAccessFile(file, "r");
-        int pageOfFile = (int) file.length() / 1500;
+        int pageOfFile = (int) file.length() / PAGE_SIZE + 1;
+        int searchPage = (int) (result.getStartByte() / PAGE_SIZE + 1);
+        Pagination pagination = new Pagination(pageOfFile, searchPage);
 
-        pagination = new Pagination(pageOfFile, NUMBER_ON_PAGE);
+        final boolean[] firstTimePAgeView = {true};
         pagination.setStyle("-fx-border-color:red;");
-        pagination.setPageFactory(new Callback<Integer, Node>() {
-            @Override
-            public Node call(Integer pageIndex) {
-                return createPage(pageIndex);
+        pagination.setPageFactory(pageIndex -> {
+            try {
+                long pos = pageIndex * PAGE_SIZE - PAGE_SIZE / 2;
+                if (firstTimePAgeView[0]) {
+                    pos = result.getStartByte() - PAGE_SIZE / 2;
+                    firstTimePAgeView[0] = false;
+                }
+                if (pos < 0) pos = 0;
+                log.info("Click page = " + pageIndex + "\t position=" + pos);
+                raf.seek(pos);
+                raf.readLine(); // skip first line
+                VBox box = new VBox();
+                while(raf.getFilePointer() < pos + PAGE_SIZE / 2){
+                    String line = raf.readLine();
+                    VBox element = new VBox();
+                    element.getChildren().add(new Label(line));
+                    box.getChildren().add(element);
+                }
+                return box;
+            } catch (IOException e) {
+                e.printStackTrace();
             }
+            return null;
         });
 
         AnchorPane anchor = new AnchorPane();
@@ -104,27 +123,11 @@ public class SearchingResultActivityController {
         AnchorPane.setRightAnchor(pagination, 10.0);
         AnchorPane.setBottomAnchor(pagination, 10.0);
         AnchorPane.setLeftAnchor(pagination, 10.0);
-
         anchor.getChildren().addAll(pagination);
-        Scene scene = new Scene(anchor);
+        Scene scene = new Scene(anchor, 700, 500);
         Stage stage = new Stage();
         stage.setScene(scene);
-        stage.setTitle("PaginationSample");
+        stage.setTitle("Log Viewer");
         stage.show();
-    }
-
-
-    public VBox createPage(int pageIndex) {
-        VBox box = new VBox(5);
-        int page = pageIndex * NUMBER_ON_PAGE;
-        for (int i = page; i < page + NUMBER_ON_PAGE; i++) {
-            VBox element = new VBox();
-            Hyperlink link = new Hyperlink("Item " + (i + 1));
-            link.setVisited(true);
-            Label text = new Label("Search results\nfor " + link.getText());
-            element.getChildren().addAll(link, text);
-            box.getChildren().add(element);
-        }
-        return box;
     }
 }
